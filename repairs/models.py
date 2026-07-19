@@ -22,18 +22,23 @@ class RepairOrder(models.Model):
     class Estado(models.TextChoices):
         RECIBIDO = 'recibido', 'Recibido'
         DIAGNOSTICO = 'diagnostico', 'En diagnóstico'
-        ESPERANDO_REPUESTOS = 'esperando_repuestos', 'Esperando repuestos'
+        ESPERANDO_APROBACION = 'esperando_aprobacion', 'Esperando aprobación'
         EN_REPARACION = 'en_reparacion', 'En reparación'
-        REPARADO = 'reparado', 'Reparado'
+        EN_PRUEBAS = 'en_pruebas', 'En pruebas'
+        LISTO_PARA_ENTREGAR = 'listo_para_entregar', 'Listo para entregar'
+        FACTURADO = 'facturado', 'Facturado'
         ENTREGADO = 'entregado', 'Entregado'
 
     # Transiciones de estado permitidas (workflow)
+    # Define el flujo lógico de la reparación
     TRANSICIONES = {
-        Estado.RECIBIDO: [Estado.DIAGNOSTICO, Estado.ENTREGADO],
-        Estado.DIAGNOSTICO: [Estado.ESPERANDO_REPUESTOS, Estado.EN_REPARACION, Estado.ENTREGADO],
-        Estado.ESPERANDO_REPUESTOS: [Estado.EN_REPARACION, Estado.ENTREGADO],
-        Estado.EN_REPARACION: [Estado.REPARADO, Estado.ENTREGADO],
-        Estado.REPARADO: [Estado.ENTREGADO],
+        Estado.RECIBIDO: [Estado.DIAGNOSTICO],
+        Estado.DIAGNOSTICO: [Estado.ESPERANDO_APROBACION, Estado.ENTREGADO],
+        Estado.ESPERANDO_APROBACION: [Estado.EN_REPARACION, Estado.DIAGNOSTICO],
+        Estado.EN_REPARACION: [Estado.EN_PRUEBAS, Estado.EN_REPARACION],  # Permite reintentos
+        Estado.EN_PRUEBAS: [Estado.LISTO_PARA_ENTREGAR, Estado.EN_REPARACION],  # Retroceso si falla
+        Estado.LISTO_PARA_ENTREGAR: [Estado.FACTURADO],
+        Estado.FACTURADO: [Estado.ENTREGADO],
         Estado.ENTREGADO: [],
     }
 
@@ -166,6 +171,11 @@ class RepairOrder(models.Model):
           la ganancia correctamente); si el repuesto fue cargado solo con
           descripción libre (sin Product), se usa un producto "concepto"
           genérico de repuesto de servicio técnico.
+
+        Los ítems siempre se crean en BD para mantener el detalle de repuestos,
+        costos y utilidad. La agrupación (mostrar como un único concepto) se
+        realiza únicamente en la presentación (PDF, templates) según la
+        configuración de ventas.
 
         No vuelve a descontar stock: el stock de los repuestos ya se
         descontó al agregarlos a la orden (ver repairs.views.order_create).
