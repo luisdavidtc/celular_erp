@@ -1,0 +1,191 @@
+/*
+  Estilos compartidos para comprobantes imprimibles (ventas y servicio técnico).
+  Usado por templates/sales/sale_print.html y templates/repairs/order_print.html.
+  No depende de Bootstrap ni del layout del ERP: estas vistas son standalone.
+*/
+
+:root {
+    --primario: #2563eb;
+    --secundario: #9333ea;
+    --texto: #1f2937;
+    --muted: #6b7280;
+    --borde: #d1d5db;
+    --warn: #ea580c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #e9ecf1;
+    margin: 0;
+    padding: 30px 16px;
+    color: var(--texto);
+}
+
+.toolbar-no-print {
+    max-width: 720px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.toolbar-no-print button {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--borde);
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.toolbar-no-print button.primario {
+    background: var(--primario);
+    color: #fff;
+    border-color: var(--primario);
+}
+
+.stage { display: flex; justify-content: center; }
+
+/* ===================== TICKET 58mm / 80mm ===================== */
+.ticket {
+    width: 302px;
+    background: #fff;
+    padding: 14px 16px 18px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 11.5px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .15);
+}
+.ticket.tamano-58mm { width: 226px; font-size: 10.5px; }
+
+.ticket .t-center { text-align: center; }
+.ticket .t-logo-img { max-width: 60px; max-height: 60px; margin: 0 auto 6px auto; display: block; }
+.ticket .t-logo {
+    width: 46px; height: 46px; border-radius: 8px;
+    background: var(--primario); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 18px; margin: 0 auto 6px auto;
+}
+.ticket h1 { font-size: 13.5px; margin: 0 0 2px 0; text-transform: uppercase; letter-spacing: .5px; }
+.ticket .sub { color: #444; font-size: 10.5px; margin: 0; }
+.ticket hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
+.ticket .doc-title { font-weight: bold; font-size: 12.5px; }
+.ticket .doc-meta { display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px; }
+.ticket .estado-badge {
+    display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 20px;
+    color: #fff; font-weight: bold; font-size: 10.5px; text-transform: uppercase;
+}
+.ticket .campo { margin-top: 6px; }
+.ticket .campo .lbl { color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.ticket .campo .val { font-weight: bold; font-size: 11.5px; }
+.ticket table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 10.5px; }
+.ticket thead td { border-bottom: 1px dashed #999; font-weight: bold; padding-bottom: 3px; }
+.ticket td { padding: 3px 0; vertical-align: top; }
+.ticket .r { text-align: right; }
+.ticket .item-name { font-weight: bold; }
+.ticket .item-code { color: #666; font-size: 10px; }
+.ticket .totales td { padding: 2px 0; }
+.ticket .totales .lbl { color: #444; }
+.ticket .total-final td { border-top: 1px dashed #999; padding-top: 5px; font-weight: bold; font-size: 12.5px; }
+.ticket .footer-msg { text-align: center; font-size: 11px; margin-top: 8px; font-weight: bold; }
+.ticket .aviso, .ticket .legal { text-align: center; font-size: 9.5px; color: #444; margin-top: 8px; line-height: 1.5; }
+.ticket .qr-box { width: 72px; margin: 10px auto 0 auto; display: block; }
+.ticket .firma-box { margin-top: 14px; border-top: 1px dashed #999; padding-top: 4px; text-align: center; font-size: 9.5px; color: #777; }
+.ticket .firma-linea { border-top: 1px solid #999; margin: 22px 10px 4px 10px; }
+
+/* ===================== CARTA (A4 / Letter) ===================== */
+.invoice {
+    width: 720px;
+    background: #fff;
+    padding: 40px 46px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .15);
+}
+.invoice-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 3px solid var(--primario); padding-bottom: 18px;
+}
+.invoice-brand { display: flex; gap: 14px; align-items: center; }
+.invoice-logo-img { width: 58px; height: 58px; object-fit: contain; border-radius: 12px; }
+.invoice-logo {
+    width: 58px; height: 58px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primario), var(--secundario));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 22px;
+}
+.invoice-brand h1 { font-size: 19px; margin: 0; }
+.invoice-brand p { margin: 2px 0 0 0; font-size: 12px; color: var(--muted); }
+.invoice-doc { text-align: right; }
+.invoice-doc .badge {
+    color: #fff; font-size: 11px; font-weight: bold;
+    padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 6px;
+    text-transform: uppercase;
+}
+.invoice-doc h2 { margin: 0; font-size: 20px; letter-spacing: .5px; }
+.invoice-doc p { margin: 2px 0 0 0; font-size: 12px; color: var(--muted); }
+
+.invoice-meta { display: flex; gap: 24px; margin-top: 22px; }
+.invoice-meta .box { flex: 1; }
+.invoice-meta .box h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); margin: 0 0 6px 0; border-bottom: 1px solid var(--borde); padding-bottom: 4px;
+}
+.invoice-meta .box p { margin: 2px 0; font-size: 13px; }
+.invoice-meta .box .label { color: var(--muted); font-size: 11.5px; }
+
+.invoice .falla-box {
+    margin-top: 20px; background: #f9fafb; border: 1px solid var(--borde);
+    border-radius: 8px; padding: 14px 16px;
+}
+.invoice .falla-box h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 6px 0; }
+.invoice .falla-box p { margin: 0 0 8px 0; font-size: 13px; }
+.invoice .falla-box p:last-child { margin-bottom: 0; }
+
+.invoice table.items { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+.invoice table.items thead td {
+    background: #f3f4f6; font-weight: bold; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .4px; color: var(--muted); padding: 8px 10px;
+}
+.invoice table.items tbody td { padding: 10px; border-bottom: 1px solid #eee; }
+.invoice table.items .r { text-align: right; }
+.invoice .item-name { font-weight: 600; }
+.invoice .item-code { color: var(--muted); font-size: 11px; }
+
+.invoice-totales { display: flex; justify-content: flex-end; margin-top: 14px; }
+.invoice-totales table { width: 280px; font-size: 13px; }
+.invoice-totales td { padding: 4px 0; }
+.invoice-totales .lbl { color: var(--muted); }
+.invoice-totales .r { text-align: right; }
+.invoice-totales .total-final td { border-top: 2px solid var(--primario); padding-top: 8px; font-weight: bold; font-size: 17px; }
+
+.invoice-firmas { display: flex; justify-content: space-between; gap: 40px; margin-top: 50px; }
+.invoice-firmas .firma { flex: 1; text-align: center; }
+.invoice-firmas .linea { border-top: 1px solid var(--texto); margin-bottom: 6px; }
+.invoice-firmas .firma p { margin: 0; font-size: 11.5px; color: var(--muted); }
+
+.invoice-footer {
+    margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--borde);
+    display: flex; justify-content: space-between; gap: 30px;
+    font-size: 10.5px; color: var(--muted); line-height: 1.6;
+}
+.invoice-footer .legal { max-width: 420px; }
+.invoice-footer .thanks { font-weight: 600; color: var(--primario); font-size: 14px; display: flex; align-items: center; white-space: nowrap; }
+.invoice-qr { text-align: center; }
+.invoice-qr img { width: 90px; height: 90px; }
+.invoice-qr p { font-size: 9.5px; color: var(--muted); margin: 4px 0 0 0; }
+
+/* Estados de orden de servicio (colores por fase del workflow) */
+.estado-recibido { background: #6b7280; }
+.estado-diagnostico { background: #2563eb; }
+.estado-esperando_repuestos { background: #d97706; }
+.estado-en_reparacion { background: var(--warn); }
+.estado-reparado { background: #16a34a; }
+.estado-entregado { background: #15803d; }
+
+@media print {
+    body { background: #fff; padding: 0; }
+    .toolbar-no-print { display: none; }
+    .ticket, .invoice { box-shadow: none; }
+}

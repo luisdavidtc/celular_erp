@@ -1,0 +1,62 @@
+/*
+  Loading Screen global de la aplicación.
+
+  Archivo nuevo, aislado del resto de static/css/styles.css. Solo se usa
+  para el overlay de carga inicial definido en templates/base.html.
+  No depende de Bootstrap ni de ningún otro estilo existente.
+*/
+
+#erp-loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    background: #ffffff;
+    /* Bloquea la interacción del usuario mientras está visible */
+    pointer-events: all;
+    transition: opacity 400ms ease;
+    opacity: 1;
+}
+
+/* Tema oscuro: se activa si Identidad Visual > Tema = "oscuro" (ver base.html) */
+#erp-loading-screen.erp-loading-oscuro {
+    background: #111827;
+}
+
+#erp-loading-screen.erp-loading-oculto {
+    opacity: 0;
+}
+
+#erp-loading-screen .erp-loading-logo {
+    max-height: 64px;
+    max-width: 160px;
+    width: auto;
+    object-fit: contain;
+}
+
+#erp-loading-screen .erp-loading-spinner {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 4px solid rgba(37, 99, 235, 0.15);
+    border-top-color: var(--erp-color-primario, #2563eb);
+    animation: erp-loading-spin 0.8s linear infinite;
+}
+
+#erp-loading-screen.erp-loading-oscuro .erp-loading-spinner {
+    border-color: rgba(255, 255, 255, 0.15);
+    border-top-color: var(--erp-color-primario, #2563eb);
+}
+
+@keyframes erp-loading-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mientras el overlay está activo, evita el scroll de fondo */
+body.erp-loading-activo {
+    overflow: hidden;
+}

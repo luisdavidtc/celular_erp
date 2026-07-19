@@ -1,0 +1,222 @@
+/* ===========================================================
+   Estilos personalizados del ERP - Celulares
+   Colores corporativos: sidebar azul oscuro, fondo gris claro
+   =========================================================== */
+
+:root {
+    --erp-sidebar-bg: #1e293b;       /* Azul oscuro (slate) */
+    --erp-sidebar-bg-hover: #334155;
+    --erp-sidebar-active: #2563eb;   /* Azul corporativo */
+    --erp-sidebar-text: #cbd5e1;
+    --erp-sidebar-text-active: #ffffff;
+    --erp-bg: #f1f5f9;               /* Gris claro */
+    --erp-primary: #2563eb;
+    --erp-sidebar-width: 250px;
+}
+
+body {
+    background-color: var(--erp-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ===================== Sidebar ===================== */
+.erp-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--erp-sidebar-width);
+    background-color: var(--erp-sidebar-bg);
+    color: var(--erp-sidebar-text);
+    display: flex;
+    flex-direction: column;
+    z-index: 1040;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+.erp-sidebar .sidebar-brand {
+    padding: 1.25rem 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.erp-sidebar .sidebar-brand i {
+    color: var(--erp-sidebar-active);
+}
+
+.erp-sidebar .nav {
+    padding: 0.75rem 0;
+    flex: 1;
+}
+
+.erp-sidebar .nav-link {
+    color: var(--erp-sidebar-text);
+    padding: 0.7rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-size: 0.95rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.erp-sidebar .nav-link i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.erp-sidebar .nav-link:hover {
+    background-color: var(--erp-sidebar-bg-hover);
+    color: var(--erp-sidebar-text-active);
+}
+
+.erp-sidebar .nav-link.active {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: var(--erp-sidebar-text-active);
+    border-left-color: var(--erp-sidebar-active);
+    font-weight: 600;
+}
+
+.erp-sidebar .sidebar-footer {
+    padding: 1rem 1.5rem;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+}
+
+/* ===================== Contenido ===================== */
+.erp-content {
+    margin-left: var(--erp-sidebar-width);
+    min-height: 100vh;
+    transition: margin 0.3s ease;
+}
+
+.erp-navbar {
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    padding: 0.75rem 1.5rem;
+}
+
+.erp-main {
+    padding: 1.75rem;
+}
+
+/* ===================== KPI Cards ===================== */
+.kpi-card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.kpi-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: #fff;
+}
+
+.kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.kpi-label {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Tarjetas y tablas */
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ===================== Login ===================== */
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+    padding: 1rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.login-logo {
+    width: 70px;
+    height: 70px;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #fff;
+    margin: 0 auto 1rem;
+}
+
+/* ===================== Responsive ===================== */
+.sidebar-toggle {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .erp-sidebar {
+        transform: translateX(-100%);
+    }
+    .erp-sidebar.show {
+        transform: translateX(0);
+    }
+    .erp-content {
+        margin-left: 0;
+    }
+    .sidebar-toggle {
+        display: inline-flex;
+    }
+}
+
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1035;
+}
+
+.sidebar-backdrop.show {
+    display: block;
+}

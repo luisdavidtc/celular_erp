@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Servicio Técnico - ERP Celulares{% endblock %}
+{% block page_title %}Servicio Técnico{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <form class="row g-2 align-items-end" method="get">
+        <div class="col-auto">
+            <label class="form-label small mb-1">Buscar</label>
+            <input type="text" name="q" value="{{ busqueda }}" class="form-control form-control-sm"
+                   placeholder="N° orden, cliente, IMEI, equipo...">
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1">Estado</label>
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in estados %}
+                <option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+            <a href="{% url 'repairs:order_list' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+        </div>
+    </form>
+    <a href="{% url 'repairs:order_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Nueva orden
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>N° Orden</th>
+                        <th>Recepción</th>
+                        <th>Cliente</th>
+                        <th>Equipo</th>
+                        <th>Técnico</th>
+                        <th>Estado</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in ordenes %}
+                    <tr>
+                        <td class="fw-semibold">{{ o.numero_orden }}</td>
+                        <td>{{ o.fecha_recepcion|date:"d/m/Y" }}</td>
+                        <td>{{ o.cliente.nombre_completo }}</td>
+                        <td>{{ o.equipo }} {% if o.marca %}<small class="text-muted">{{ o.marca }}</small>{% endif %}</td>
+                        <td>{{ o.tecnico.get_full_name|default:o.tecnico.username|default:"—" }}</td>
+                        <td>
+                            {% if o.estado == 'entregado' %}<span class="badge bg-success">{{ o.get_estado_display }}</span>
+                            {% elif o.estado == 'reparado' %}<span class="badge bg-info text-dark">{{ o.get_estado_display }}</span>
+                            {% elif o.estado == 'en_reparacion' %}<span class="badge bg-primary">{{ o.get_estado_display }}</span>
+                            {% elif o.estado == 'esperando_repuestos' %}<span class="badge bg-warning text-dark">{{ o.get_estado_display }}</span>
+                            {% elif o.estado == 'diagnostico' %}<span class="badge bg-secondary">{{ o.get_estado_display }}</span>
+                            {% else %}<span class="badge bg-dark">{{ o.get_estado_display }}</span>{% endif %}
+                        </td>
+                        <td class="text-end">$ {{ o.total|floatformat:0 }}</td>
+                        <td class="text-end text-nowrap">
+                            <a href="{% url 'repairs:order_detail' o.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">No se encontraron órdenes de servicio.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

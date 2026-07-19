@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Orden {{ orden.numero_orden }} - ERP Celulares{% endblock %}
+{% block page_title %}Orden de servicio {{ orden.numero_orden }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <a href="{% url 'repairs:order_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+    <a href="{% url 'repairs:order_print' orden.pk %}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer"></i> Imprimir</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Datos del equipo -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-phone"></i> Equipo</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3 fw-normal text-muted">Equipo</dt><dd class="col-sm-9">{{ orden.equipo }}</dd>
+                    <dt class="col-sm-3 fw-normal text-muted">Marca</dt><dd class="col-sm-9">{{ orden.marca|default:"—" }}</dd>
+                    <dt class="col-sm-3 fw-normal text-muted">Modelo</dt><dd class="col-sm-9">{{ orden.modelo_equipo|default:"—" }}</dd>
+                    <dt class="col-sm-3 fw-normal text-muted">IMEI / Serial</dt><dd class="col-sm-9">{{ orden.imei|default:"—" }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Falla y diagnóstico -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-clipboard-pulse"></i> Falla y diagnóstico</div>
+            <div class="card-body">
+                <h6 class="text-muted">Falla reportada</h6>
+                <p>{{ orden.falla_reportada|linebreaksbr }}</p>
+                <h6 class="text-muted mt-3">Diagnóstico</h6>
+                <p class="mb-0">{{ orden.diagnostico|default:"Sin diagnóstico aún."|linebreaksbr }}</p>
+                <h6 class="text-muted mt-3">Concepto de servicio (factura)</h6>
+                <p class="mb-0">{{ orden.concepto_display }}</p>
+            </div>
+        </div>
+
+        <!-- Repuestos -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-tools"></i> Repuestos</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Descripción</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Precio unit.</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for parte in repuestos %}
+                            <tr>
+                                <td>
+                                    {{ parte.descripcion }}
+                                    {% if parte.producto %}<small class="text-muted">({{ parte.producto.codigo }})</small>{% endif %}
+                                </td>
+                                <td class="text-end">{{ parte.cantidad }}</td>
+                                <td class="text-end">$ {{ parte.precio_unitario|floatformat:0 }}</td>
+                                <td class="text-end">$ {{ parte.subtotal|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">Sin repuestos registrados.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if orden.observaciones %}
+        <div class="card">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-left-text"></i> Observaciones / Historial</div>
+            <div class="card-body"><p class="mb-0" style="white-space: pre-line;">{{ orden.observaciones }}</p></div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Estado -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-arrow-repeat"></i> Estado</div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Estado actual:
+                    {% if orden.estado == 'entregado' %}<span class="badge bg-success">{{ orden.get_estado_display }}</span>
+                    {% elif orden.estado == 'reparado' %}<span class="badge bg-info text-dark">{{ orden.get_estado_display }}</span>
+                    {% elif orden.estado == 'en_reparacion' %}<span class="badge bg-primary">{{ orden.get_estado_display }}</span>
+                    {% elif orden.estado == 'esperando_repuestos' %}<span class="badge bg-warning text-dark">{{ orden.get_estado_display }}</span>
+                    {% elif orden.estado == 'diagnostico' %}<span class="badge bg-secondary">{{ orden.get_estado_display }}</span>
+                    {% else %}<span class="badge bg-dark">{{ orden.get_estado_display }}</span>{% endif %}
+                </p>
+                {% if orden.estado != 'entregado' %}
+                <form method="post" action="{% url 'repairs:order_update_status' orden.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ status_form.nuevo_estado.label }}</label>
+                        {{ status_form.nuevo_estado }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ status_form.nota.label }}</label>
+                        {{ status_form.nota }}
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Actualizar estado</button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-success mb-0 py-2"><i class="bi bi-check-circle"></i> Orden entregada al cliente.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Facturación -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-receipt-cutoff"></i> Facturación</div>
+            <div class="card-body">
+                {% if orden.venta_id %}
+                <div class="alert alert-success mb-2 py-2">
+                    <i class="bi bi-check-circle"></i> Orden facturada como venta
+                    <strong>{{ orden.venta.numero }}</strong>.
+                </div>
+                <a href="{% url 'sales:sale_detail' orden.venta_id %}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-cart-check"></i> Ver factura generada
+                </a>
+                {% else %}
+                <p class="small text-muted mb-2">
+                    Al facturar se creará automáticamente una venta con un único
+                    concepto: <strong>"{{ orden.concepto_display }}"</strong> por
+                    $ {{ orden.total|floatformat:0 }}. Internamente se seguirán
+                    registrando la mano de obra y cada repuesto por separado para
+                    el cálculo de inventario y utilidad.
+                </p>
+                <form method="post" action="{% url 'repairs:order_invoice' orden.pk %}"
+                      onsubmit="return confirm('¿Facturar esta orden de servicio? Se creará una venta y no podrá facturarse de nuevo.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm w-100">
+                        <i class="bi bi-receipt"></i> Facturar reparación
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-person"></i> Cliente</div>
+            <div class="card-body">
+                <p class="mb-1 fw-semibold">{{ orden.cliente.nombre_completo }}</p>
+                <p class="mb-1 small text-muted">Documento: {{ orden.cliente.documento }}</p>
+                <p class="mb-0 small text-muted">Teléfono: {{ orden.cliente.telefono|default:"—" }}</p>
+            </div>
+        </div>
+
+        <!-- Resumen costos -->
+        <div class="card">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-receipt"></i> Resumen</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-7 fw-normal text-muted">Técnico</dt>
+                    <dd class="col-5 text-end">{{ orden.tecnico.get_full_name|default:orden.tecnico.username|default:"—" }}</dd>
+                    <dt class="col-7 fw-normal text-muted">Recepción</dt>
+                    <dd class="col-5 text-end">{{ orden.fecha_recepcion|date:"d/m/Y" }}</dd>
+                    <dt class="col-7 fw-normal text-muted">Entrega</dt>
+                    <dd class="col-5 text-end">{{ orden.fecha_entrega|date:"d/m/Y"|default:"—" }}</dd>
+                    <dt class="col-7 fw-normal text-muted">Costo repuestos</dt>
+                    <dd class="col-5 text-end">$ {{ orden.costo_repuestos|floatformat:0 }}</dd>
+                    <dt class="col-7 fw-normal text-muted">Mano de obra</dt>
+                    <dd class="col-5 text-end">$ {{ orden.mano_obra|floatformat:0 }}</dd>
+                    <dt class="col-7 fw-normal text-muted">IVA ({{ orden.iva_porcentaje|floatformat:0 }}%)</dt>
+                    <dd class="col-5 text-end">$ {{ orden.iva_valor|floatformat:0 }}</dd>
+                    <dt class="col-7 fw-bold border-top pt-2">Total</dt>
+                    <dd class="col-5 text-end fw-bold fs-5 border-top pt-2">$ {{ orden.total|floatformat:0 }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ titulo }} - ERP Celulares{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<form method="post" id="ordenForm" data-productos-url="{% url 'sales:product_search' %}">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <!-- Datos generales -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-person-badge"></i> Datos generales</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cliente</label>
+                            {{ form.cliente }}
+                            {% for e in form.cliente.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Técnico asignado</label>
+                            {{ form.tecnico }}
+                            {% for e in form.tecnico.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipo -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-phone"></i> Equipo</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Equipo</label>
+                            {{ form.equipo }}
+                            {% for e in form.equipo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">IMEI / Serial</label>
+                            {{ form.imei }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Marca</label>
+                            {{ form.marca }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Modelo del equipo</label>
+                            {{ form.modelo_equipo }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Falla -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-clipboard-pulse"></i> Falla y diagnóstico</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Falla reportada</label>
+                        {{ form.falla_reportada }}
+                        {% for e in form.falla_reportada.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Diagnóstico (opcional)</label>
+                        {{ form.diagnostico }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Concepto de servicio para factura -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-receipt-cutoff"></i> Concepto de servicio (factura)</div>
+                <div class="card-body">
+                    <label class="form-label fw-semibold">{{ form.concepto_servicio.label }}</label>
+                    {{ form.concepto_servicio }}
+                    <div class="form-text">
+                        Es el único texto que verá el cliente en la factura al facturar esta
+                        orden (mano de obra y repuestos quedan agrupados). Si se deja vacío,
+                        se genera uno automático a partir del equipo.
+                    </div>
+                    {% for e in form.concepto_servicio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <!-- Repuestos -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-tools"></i> Repuestos</div>
+                <div class="card-body">
+                    <div class="position-relative mb-2">
+                        <input type="text" id="productoBuscar" class="form-control"
+                               placeholder="Buscar repuesto del inventario para agregar...">
+                        <div id="productoResultados" class="list-group position-absolute w-100 shadow"
+                             style="z-index: 1000; display: none; max-height: 240px; overflow-y: auto;"></div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="agregarManual">
+                        <i class="bi bi-plus-lg"></i> Agregar repuesto manual (sin inventario)
+                    </button>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th style="width: 100px;">Cantidad</th>
+                                    <th style="width: 130px;">Precio unit.</th>
+                                    <th class="text-end" style="width: 120px;">Subtotal</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="partesBody">
+                                <tr id="filaVacia"><td colspan="5" class="text-center text-muted py-3">Sin repuestos agregados.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-left-text"></i> Observaciones</div>
+                <div class="card-body">{{ form.observaciones }}</div>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 1rem;">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-calculator"></i> Costos</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Mano de obra ($)</label>
+                        {{ form.mano_obra }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">IVA (%)</label>
+                        {{ form.iva_porcentaje }}
+                    </div>
+                    <hr>
+                    <dl class="row mb-0">
+                        <dt class="col-7 fw-normal text-muted">Costo repuestos</dt>
+                        <dd class="col-5 text-end" id="resRepuestos">$ 0</dd>
+                        <dt class="col-7 fw-normal text-muted">Mano de obra</dt>
+                        <dd class="col-5 text-end" id="resManoObra">$ 0</dd>
+                        <dt class="col-7 fw-normal text-muted">IVA</dt>
+                        <dd class="col-5 text-end" id="resIva">$ 0</dd>
+                        <dt class="col-7 fw-bold border-top pt-2">Total</dt>
+                        <dd class="col-5 text-end fw-bold fs-5 border-top pt-2" id="resTotal">$ 0</dd>
+                    </dl>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Crear orden</button>
+                        <a href="{% url 'repairs:order_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Plantilla de fila de repuesto -->
+<template id="filaParteTemplate">
+    <tr class="parte-fila">
+        <td>
+            <input type="text" name="parte_descripcion" class="form-control form-control-sm descripcion" placeholder="Descripción del repuesto">
+            <input type="hidden" name="parte_producto_id" class="prod-id">
+            <small class="text-muted info-stock"></small>
+        </td>
+        <td><input type="number" name="parte_cantidad" class="form-control form-control-sm cantidad" value="1" min="1"></td>
+        <td><input type="number" name="parte_precio" class="form-control form-control-sm precio" value="0" step="0.01" min="0"></td>
+        <td class="text-end subtotal-celda">$ 0</td>
+        <td><button type="button" class="btn btn-sm btn-outline-danger quitar"><i class="bi bi-trash"></i></button></td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/order_form.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ERP Celulares{% endblock %}</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Estilos propios -->
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/loading.css' %}" rel="stylesheet">
+    {% if branding_config and branding_config.favicon %}
+    <link rel="icon" href="{{ branding_config.favicon.url }}">
+    {% endif %}
+    {% if branding_config %}
+    <style>
+        :root {
+            --erp-color-primario: {{ branding_config.color_primario|default:'#2563eb' }};
+            --erp-color-secundario: {{ branding_config.color_secundario|default:'#9333ea' }};
+            --erp-color-botones: {{ branding_config.color_botones|default:'#2563eb' }};
+        }
+    </style>
+    {% endif %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="erp-loading-activo">
+    <!-- ============ LOADING SCREEN ============ -->
+    <div id="erp-loading-screen" class="{% if branding_config and branding_config.tema == 'oscuro' %}erp-loading-oscuro{% endif %}">
+        {% if branding_config and branding_config.logo_principal %}
+        <img class="erp-loading-logo" src="{{ branding_config.logo_principal.url }}" alt="{{ company_config.nombre_comercial|default:'Logo' }}">
+        {% endif %}
+        <div class="erp-loading-spinner" role="status" aria-label="Cargando"></div>
+    </div>
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="erp-sidebar" id="erpSidebar">
+        <div class="sidebar-brand">
+            {% if branding_config and branding_config.logo_principal %}
+            <img src="{{ branding_config.logo_principal.url }}" alt="Logo" style="height: 28px; width: auto;">
+            {% else %}
+            <i class="bi bi-phone"></i>
+            {% endif %}
+            <span>{{ company_config.nombre_comercial|default:'ERP Celulares' }}</span>
+        </div>
+        <nav class="nav flex-column">
+            <a href="{% url 'dashboard:index' %}" class="nav-link {% if seccion_activa == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            {% if user.es_admin or user.role == 'vendedor' %}
+            <a href="{% url 'sales:sale_list' %}" class="nav-link {% if seccion_activa == 'ventas' %}active{% endif %}">
+                <i class="bi bi-cart3"></i> Ventas
+            </a>
+            {% endif %}
+            {% if user.es_admin or user.role == 'tecnico' %}
+            <a href="{% url 'repairs:order_list' %}" class="nav-link {% if seccion_activa == 'servicio' %}active{% endif %}">
+                <i class="bi bi-tools"></i> Servicio Técnico
+            </a>
+            {% endif %}
+            {% if user.es_admin %}
+            <a href="{% url 'inventory:product_list' %}" class="nav-link {% if seccion_activa == 'inventario' %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> Inventario
+            </a>
+            {% endif %}
+            <a href="{% url 'clients:client_list' %}" class="nav-link {% if seccion_activa == 'clientes' %}active{% endif %}">
+                <i class="bi bi-people"></i> Clientes
+            </a>
+            <a href="#" class="nav-link {% if seccion_activa == 'proveedores' %}active{% endif %}">
+                <i class="bi bi-truck"></i> Proveedores
+            </a>
+            <a href="#" class="nav-link {% if seccion_activa == 'reportes' %}active{% endif %}">
+                <i class="bi bi-graph-up"></i> Reportes
+            </a>
+            {% if user.es_admin %}
+            <a href="{% url 'accounts:user_list' %}" class="nav-link {% if seccion_activa == 'configuracion' %}active{% endif %}">
+                <i class="bi bi-gear"></i> Usuarios
+            </a>
+            <a href="{% url 'company:config' %}" class="nav-link {% if seccion_activa == 'configuracion_empresa' %}active{% endif %}">
+                <i class="bi bi-building-gear"></i> Configuración de Empresa
+            </a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-footer">
+            <i class="bi bi-c-circle"></i> 2026 ERP Celulares v1.0
+        </div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- ============ CONTENIDO ============ -->
+    <div class="erp-content">
+        <!-- Navbar superior -->
+        <nav class="erp-navbar d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-light sidebar-toggle" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h5 class="mb-0 fw-semibold">{% block page_title %}{% endblock %}</h5>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-light d-flex align-items-center gap-2 dropdown-toggle"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span class="text-start d-none d-sm-block">
+                        <span class="d-block fw-semibold lh-1">{{ user.get_full_name|default:user.username }}</span>
+                        <small class="text-muted">{{ user.get_role_display }}</small>
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><span class="dropdown-item-text text-muted small">{{ user.email|default:"Sin correo" }}</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Contenido principal -->
+        <main class="erp-main">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle del sidebar en pantallas pequeñas
+        const toggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('erpSidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+                backdrop.classList.toggle('show');
+            });
+        }
+        if (backdrop) {
+            backdrop.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('show');
+            });
+        }
+    </script>
+    <script src="{% static 'js/loading.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

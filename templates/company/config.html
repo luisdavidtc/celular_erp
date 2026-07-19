@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block title %}Configuración de Empresa - ERP Celulares{% endblock %}
+{% block page_title %}Configuración de Empresa{% endblock %}
+
+{% block content %}
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'empresa' %}active{% endif %}" href="?tab=empresa">
+            <i class="bi bi-building"></i> Empresa
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'identidad' %}active{% endif %}" href="?tab=identidad">
+            <i class="bi bi-palette"></i> Identidad Visual
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'facturacion' %}active{% endif %}" href="?tab=facturacion">
+            <i class="bi bi-receipt"></i> Facturación
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'ventas' %}active{% endif %}" href="?tab=ventas">
+            <i class="bi bi-cart3"></i> Ventas
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'impresion' %}active{% endif %}" href="?tab=impresion">
+            <i class="bi bi-printer"></i> Impresión
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'whatsapp' %}active{% endif %}" href="?tab=whatsapp">
+            <i class="bi bi-whatsapp"></i> WhatsApp
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {% if tab_activa == 'correo' %}active{% endif %}" href="?tab=correo">
+            <i class="bi bi-envelope"></i> Correo
+        </a>
+    </li>
+</ul>
+
+<div class="card">
+    <div class="card-body p-4">
+
+        {% if tab_activa == 'empresa' %}
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="empresa">
+            <h6 class="text-muted mb-3">Datos generales</h6>
+            <div class="row g-3">
+                {% for field in forms.empresa %}
+                {% if field.name in 'nombre_comercial,razon_social,nit,tipo_empresa,regimen_tributario,actividad_economica' %}
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="form-check">
+                        {{ forms.empresa.responsable_iva }}
+                        <label class="form-check-label" for="{{ forms.empresa.responsable_iva.id_for_label }}">
+                            {{ forms.empresa.responsable_iva.label }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="text-muted mt-4 mb-3">Ubicación y contacto</h6>
+            <div class="row g-3">
+                {% for field in forms.empresa %}
+                {% if field.name in 'direccion,pais,departamento,municipio,codigo_postal,telefono,whatsapp,correo,sitio_web' %}
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <h6 class="text-muted mt-4 mb-3">Regional</h6>
+            <div class="row g-3">
+                {% for field in forms.empresa %}
+                {% if field.name in 'moneda,simbolo_moneda,idioma,zona_horaria' %}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if tab_activa == 'identidad' %}
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="identidad">
+            <div class="row g-3">
+                {% for field in forms.identidad %}
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if tab_activa == 'facturacion' %}
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="facturacion">
+            <h6 class="text-muted mb-3">Numeración y resolución DIAN</h6>
+            <div class="row g-3">
+                {% for field in forms.facturacion %}
+                {% if field.name in 'prefijo_facturacion,consecutivo_inicial,consecutivo_actual,resolucion_dian,fecha_resolucion,fecha_vencimiento_resolucion,tipo_documento' %}
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <h6 class="text-muted mt-4 mb-3">Pie de factura (Ventas)</h6>
+            <div class="row g-3">
+                {% for field in forms.facturacion %}
+                {% if field.name in 'nota_legal,politica_devolucion,mensaje_agradecimiento' %}
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <h6 class="text-muted mt-4 mb-3">Pie de recibo (Servicio Técnico)</h6>
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold" for="{{ forms.facturacion.condiciones_servicio_tecnico.id_for_label }}">
+                        {{ forms.facturacion.condiciones_servicio_tecnico.label }}
+                    </label>
+                    {{ forms.facturacion.condiciones_servicio_tecnico }}
+                    <div class="form-text">Se muestra en el pie de los recibos de órdenes de servicio técnico.</div>
+                    {% for error in forms.facturacion.condiciones_servicio_tecnico.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if tab_activa == 'ventas' %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="ventas">
+            <div class="row g-3">
+                {% for field in forms.ventas %}
+                <div class="col-md-6">
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="form-check mt-2">
+                        {{ field }}
+                        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    </div>
+                    {% else %}
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% endif %}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if tab_activa == 'impresion' %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="impresion">
+            <div class="row g-3">
+                {% for field in forms.impresion %}
+                <div class="col-md-6">
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="form-check mt-2">
+                        {{ field }}
+                        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    </div>
+                    {% else %}
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% endif %}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if tab_activa == 'whatsapp' %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="whatsapp">
+            <div class="row g-3">
+                {% for field in forms.whatsapp %}
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.name != 'numero_principal' %}
+                    <div class="form-text">Variables disponibles: {cliente}, {numero}, {total}, {estado}, {producto}, {fecha_vencimiento}</div>
+                    {% endif %}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if tab_activa == 'correo' %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="correo">
+            <div class="row g-3">
+                {% for field in forms.correo %}
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </form>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

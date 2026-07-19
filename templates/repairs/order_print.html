@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Orden {{ orden.numero_orden }} - {{ empresa.nombre_comercial|default:'ERP Celulares' }}</title>
+<link rel="stylesheet" href="{% static 'css/print.css' %}">
+<style>
+    :root {
+        --primario: {{ branding.color_primario|default:'#2563eb' }};
+        --secundario: {{ branding.color_secundario|default:'#9333ea' }};
+    }
+</style>
+</head>
+<body>
+
+<div class="toolbar-no-print">
+    <button class="primario" onclick="window.print()">🖨️ Imprimir</button>
+    <button onclick="window.close()">Cerrar</button>
+</div>
+
+<div class="stage">
+{% if impresion.tamano_ticket == 'carta' %}
+    <!-- ============ ORDEN TAMAÑO CARTA ============ -->
+    <div class="invoice">
+        <div class="invoice-header">
+            <div class="invoice-brand">
+                {% if impresion.mostrar_logo and branding.logo_principal %}
+                <img class="invoice-logo-img" src="{{ branding.logo_principal.url }}" alt="Logo">
+                {% else %}
+                <div class="invoice-logo">{{ empresa.nombre_comercial|default:'ERP'|slice:':2'|upper }}</div>
+                {% endif %}
+                <div>
+                    <h1>{{ empresa.nombre_comercial|default:'Mi Empresa' }}</h1>
+                    <p>{{ empresa.razon_social }}{% if empresa.nit %} · NIT {{ empresa.nit }}{% endif %}</p>
+                    <p>{{ empresa.direccion }}{% if empresa.municipio %}, {{ empresa.municipio }}{% endif %}{% if empresa.telefono %} · {{ empresa.telefono }}{% endif %}</p>
+                </div>
+            </div>
+            <div class="invoice-doc">
+                <span class="badge estado-{{ orden.estado }}">{{ orden.get_estado_display }}</span>
+                <h2>{{ orden.numero_orden }}</h2>
+                <p>Recibido: {{ orden.fecha_recepcion|date:'d/m/Y H:i' }}</p>
+                <p>Técnico: {{ orden.tecnico.get_full_name|default:orden.tecnico.username|default:'Sin asignar' }}</p>
+            </div>
+        </div>
+
+        <div class="invoice-meta">
+            <div class="box">
+                <h4>Cliente</h4>
+                <p style="font-weight:600;">{{ orden.cliente.nombre }} {{ orden.cliente.apellido }}</p>
+                <p class="label">Documento: {{ orden.cliente.documento|default:'—' }}</p>
+                <p class="label">Teléfono: {{ orden.cliente.telefono|default:'—' }}</p>
+            </div>
+            <div class="box">
+                <h4>Equipo</h4>
+                <p style="font-weight:600;">{{ orden.equipo }}{% if orden.marca %} · {{ orden.marca }}{% endif %}</p>
+                {% if orden.modelo_equipo %}<p class="label">Modelo: {{ orden.modelo_equipo }}</p>{% endif %}
+                {% if orden.imei %}<p class="label">IMEI/Serial: {{ orden.imei }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="falla-box">
+            <h4>Falla reportada</h4>
+            <p>{{ orden.falla_reportada|linebreaksbr }}</p>
+            {% if orden.diagnostico %}
+            <h4>Diagnóstico técnico</h4>
+            <p>{{ orden.diagnostico|linebreaksbr }}</p>
+            {% endif %}
+        </div>
+
+        {% if repuestos %}
+        <table class="items">
+            <thead>
+                <tr><td>Concepto</td><td class="r">Cantidad</td><td class="r">Precio unit.</td><td class="r">Subtotal</td></tr>
+            </thead>
+            <tbody>
+                {% for repuesto in repuestos %}
+                <tr>
+                    <td>{{ repuesto.descripcion }}</td>
+                    <td class="r">{{ repuesto.cantidad }}</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ repuesto.precio_unitario|floatformat:0 }}</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ repuesto.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <div class="invoice-totales">
+            <table>
+                <tr><td class="lbl">Costo repuestos</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.costo_repuestos|floatformat:0 }}</td></tr>
+                <tr><td class="lbl">Mano de obra</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.mano_obra|floatformat:0 }}</td></tr>
+                <tr><td class="lbl">IVA ({{ orden.iva_porcentaje|floatformat:0 }}%)</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.iva_valor|floatformat:0 }}</td></tr>
+                <tr class="total-final"><td>Total</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.total|floatformat:0 }}</td></tr>
+            </table>
+        </div>
+
+        <div class="invoice-firmas">
+            <div class="firma">
+                <div class="linea"></div>
+                <p>Firma del cliente (recibido conforme)</p>
+            </div>
+            <div class="firma">
+                <div class="linea"></div>
+                <p>Firma del técnico responsable</p>
+            </div>
+        </div>
+
+        <div class="invoice-footer">
+            <div class="legal">
+                {% if facturacion.condiciones_servicio_tecnico %}{{ facturacion.condiciones_servicio_tecnico|linebreaksbr }}{% endif %}
+            </div>
+            {% if qr_data_uri %}
+            <div class="invoice-qr">
+                <img src="{{ qr_data_uri }}" alt="QR">
+                <p>Consulta tu orden</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% else %}
+    <!-- ============ TICKET TÉRMICO 58mm / 80mm ============ -->
+    <div class="ticket {% if impresion.tamano_ticket == '58mm' %}tamano-58mm{% endif %}">
+        <div class="t-center">
+            {% if impresion.mostrar_logo and branding.logo_impresion %}
+            <img class="t-logo-img" src="{{ branding.logo_impresion.url }}" alt="Logo">
+            {% elif impresion.mostrar_logo and branding.logo_principal %}
+            <img class="t-logo-img" src="{{ branding.logo_principal.url }}" alt="Logo">
+            {% else %}
+            <div class="t-logo">{{ empresa.nombre_comercial|default:'ERP'|slice:':2'|upper }}</div>
+            {% endif %}
+            <h1>{{ empresa.nombre_comercial|default:'Mi Empresa' }}</h1>
+            {% if empresa.nit %}<p class="sub">{{ empresa.razon_social }} · NIT {{ empresa.nit }}</p>{% endif %}
+            {% if empresa.direccion %}<p class="sub">{{ empresa.direccion }}{% if empresa.telefono %} · Tel {{ empresa.telefono }}{% endif %}</p>{% endif %}
+        </div>
+        <hr>
+        <div class="doc-title t-center">ORDEN DE SERVICIO TÉCNICO</div>
+        <div class="t-center"><span class="estado-badge estado-{{ orden.estado }}">{{ orden.get_estado_display }}</span></div>
+        <div class="doc-meta" style="margin-top:8px;">
+            <span>No. {{ orden.numero_orden }}</span>
+            <span>{{ orden.fecha_recepcion|date:'d/m/Y' }}</span>
+        </div>
+
+        <div class="campo">
+            <div class="lbl">Cliente</div>
+            <div class="val">{{ orden.cliente.nombre }} {{ orden.cliente.apellido }}</div>
+        </div>
+        <div class="campo">
+            <div class="lbl">Equipo</div>
+            <div class="val">{{ orden.equipo }}{% if orden.marca %} · {{ orden.marca }}{% endif %}</div>
+        </div>
+        {% if orden.imei %}
+        <div class="campo">
+            <div class="lbl">IMEI / Serial</div>
+            <div class="val">{{ orden.imei }}</div>
+        </div>
+        {% endif %}
+        <div class="campo">
+            <div class="lbl">Falla reportada</div>
+            <div class="val" style="font-weight:normal;">{{ orden.falla_reportada }}</div>
+        </div>
+        {% if orden.diagnostico %}
+        <div class="campo">
+            <div class="lbl">Diagnóstico</div>
+            <div class="val" style="font-weight:normal;">{{ orden.diagnostico }}</div>
+        </div>
+        {% endif %}
+        <div class="campo">
+            <div class="lbl">Técnico</div>
+            <div class="val">{{ orden.tecnico.get_full_name|default:orden.tecnico.username|default:'Sin asignar' }}</div>
+        </div>
+
+        {% if repuestos %}
+        <hr>
+        <table>
+            <thead>
+                <tr><td>Repuesto / concepto</td><td class="r">Cant</td><td class="r">Subt.</td></tr>
+            </thead>
+            <tbody>
+                {% for repuesto in repuestos %}
+                <tr>
+                    <td>{{ repuesto.descripcion }}</td>
+                    <td class="r">{{ repuesto.cantidad }}</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ repuesto.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        <hr>
+        <table class="totales">
+            <tr><td class="lbl">Repuestos</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.costo_repuestos|floatformat:0 }}</td></tr>
+            <tr><td class="lbl">Mano de obra</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.mano_obra|floatformat:0 }}</td></tr>
+            <tr><td class="lbl">IVA ({{ orden.iva_porcentaje|floatformat:0 }}%)</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.iva_valor|floatformat:0 }}</td></tr>
+            <tr class="total-final"><td>TOTAL</td><td class="r">{{ empresa.simbolo_moneda }}{{ orden.total|floatformat:0 }}</td></tr>
+        </table>
+
+        {% if facturacion.condiciones_servicio_tecnico %}
+        <div class="aviso">{{ facturacion.condiciones_servicio_tecnico }}</div>
+        {% endif %}
+        <div class="firma-box">
+            <div class="firma-linea"></div>
+            Firma de recibido conforme (cliente)
+        </div>
+        {% if qr_data_uri %}
+        <img class="qr-box" src="{{ qr_data_uri }}" alt="QR">
+        {% endif %}
+    </div>
+{% endif %}
+</div>
+
+</body>
+</html>

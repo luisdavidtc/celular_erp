@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Venta {{ venta.pk }} - {{ empresa.nombre_comercial|default:'ERP Celulares' }}</title>
+<link rel="stylesheet" href="{% static 'css/print.css' %}">
+<style>
+    :root {
+        --primario: {{ branding.color_primario|default:'#2563eb' }};
+        --secundario: {{ branding.color_secundario|default:'#9333ea' }};
+    }
+</style>
+</head>
+<body>
+
+<div class="toolbar-no-print">
+    <button class="primario" onclick="window.print()">🖨️ Imprimir</button>
+    <button onclick="window.close()">Cerrar</button>
+</div>
+
+<div class="stage">
+{% if impresion.tamano_ticket == 'carta' %}
+    <!-- ============ FACTURA TAMAÑO CARTA ============ -->
+    <div class="invoice">
+        <div class="invoice-header">
+            <div class="invoice-brand">
+                {% if impresion.mostrar_logo and branding.logo_principal %}
+                <img class="invoice-logo-img" src="{{ branding.logo_principal.url }}" alt="Logo">
+                {% else %}
+                <div class="invoice-logo">{{ empresa.nombre_comercial|default:'ERP'|slice:':2'|upper }}</div>
+                {% endif %}
+                <div>
+                    <h1>{{ empresa.nombre_comercial|default:'Mi Empresa' }}</h1>
+                    <p>{{ empresa.razon_social }}{% if empresa.nit %} · NIT {{ empresa.nit }}{% endif %}</p>
+                    <p>{{ empresa.direccion }}{% if empresa.municipio %}, {{ empresa.municipio }}{% endif %}{% if empresa.telefono %} · {{ empresa.telefono }}{% endif %}</p>
+                </div>
+            </div>
+            <div class="invoice-doc">
+                <span class="badge" style="background: var(--primario);">{{ venta.get_estado_display }}</span>
+                <h2>
+                    {% if venta.numero_factura %}{{ facturacion.prefijo_facturacion }}{% if facturacion.prefijo_facturacion %}-{% endif %}{{ venta.numero_factura }}{% else %}Sin asignar{% endif %}
+                </h2>
+                <p>Fecha: {{ venta.fecha|date:'d/m/Y H:i' }}</p>
+                <p>Vendedor: {{ venta.vendedor.get_full_name|default:venta.vendedor.username|default:'—' }}</p>
+            </div>
+        </div>
+
+        <div class="invoice-meta">
+            <div class="box">
+                <h4>Cliente</h4>
+                <p style="font-weight:600;">{{ venta.cliente.nombre }} {{ venta.cliente.apellido }}</p>
+                <p class="label">Documento: {{ venta.cliente.documento|default:'—' }}</p>
+                <p class="label">Teléfono: {{ venta.cliente.telefono|default:'—' }}</p>
+            </div>
+            {% if facturacion.resolucion_dian %}
+            <div class="box">
+                <h4>Resolución de facturación</h4>
+                <p class="label">Resolución DIAN {{ facturacion.resolucion_dian }}</p>
+                {% if facturacion.fecha_resolucion %}
+                <p class="label">Vigente: {{ facturacion.fecha_resolucion|date:'d/m/Y' }}{% if facturacion.fecha_vencimiento_resolucion %} – {{ facturacion.fecha_vencimiento_resolucion|date:'d/m/Y' }}{% endif %}</p>
+                {% endif %}
+                <p class="label">Tipo: {{ facturacion.get_tipo_documento_display }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <table class="items">
+            <thead>
+                <tr>
+                    <td>Producto</td>
+                    <td class="r">Cantidad</td>
+                    <td class="r">Precio unit.</td>
+                    {% if ventas_cfg.mostrar_descuento %}<td class="r">Descuento</td>{% endif %}
+                    <td class="r">Subtotal</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% if agrupar_servicio_tecnico %}
+                <tr>
+                    <td>
+                        <div class="item-name">{{ venta.orden_servicio.concepto_display }}</div>
+                        <div class="item-code">Servicio técnico · orden {{ venta.orden_servicio.numero_orden }}</div>
+                    </td>
+                    <td class="r">1</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ venta.subtotal|floatformat:0 }}</td>
+                    {% if ventas_cfg.mostrar_descuento %}<td class="r">{{ empresa.simbolo_moneda }}0</td>{% endif %}
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ venta.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% else %}
+                {% for item in items %}
+                <tr>
+                    <td>
+                        <div class="item-name">{{ item.producto.nombre }}</div>
+                        {% if ventas_cfg.mostrar_codigo_barras %}<div class="item-code">{{ item.producto.codigo }}</div>{% endif %}
+                    </td>
+                    <td class="r">{{ item.cantidad }}</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ item.precio_unitario|floatformat:0 }}</td>
+                    {% if ventas_cfg.mostrar_descuento %}<td class="r">{{ empresa.simbolo_moneda }}{{ item.descuento|default:0|floatformat:0 }}</td>{% endif %}
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ item.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="invoice-totales">
+            <table>
+                <tr><td class="lbl">Subtotal</td><td class="r">{{ empresa.simbolo_moneda }}{{ venta.subtotal|floatformat:0 }}</td></tr>
+                {% if ventas_cfg.mostrar_descuento %}
+                <tr><td class="lbl">Descuento ({{ venta.descuento_porcentaje|floatformat:0 }}%)</td><td class="r">-{{ empresa.simbolo_moneda }}{{ venta.descuento_valor|floatformat:0 }}</td></tr>
+                {% endif %}
+                <tr><td class="lbl">IVA ({{ venta.iva_porcentaje|floatformat:0 }}%)</td><td class="r">{{ empresa.simbolo_moneda }}{{ venta.iva_valor|floatformat:0 }}</td></tr>
+                <tr class="total-final"><td>Total</td><td class="r">{{ empresa.simbolo_moneda }}{{ venta.total|floatformat:0 }}</td></tr>
+            </table>
+        </div>
+
+        <div class="invoice-footer">
+            <div class="legal">
+                {% if facturacion.nota_legal %}{{ facturacion.nota_legal }}<br>{% endif %}
+                {% if facturacion.politica_devolucion %}{{ facturacion.politica_devolucion }}{% endif %}
+            </div>
+            {% if qr_data_uri %}
+            <div class="invoice-qr">
+                <img src="{{ qr_data_uri }}" alt="QR">
+                <p>Verifica tu compra</p>
+            </div>
+            {% endif %}
+            {% if facturacion.mensaje_agradecimiento %}
+            <div class="thanks">{{ facturacion.mensaje_agradecimiento }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+{% else %}
+    <!-- ============ TICKET TÉRMICO 58mm / 80mm ============ -->
+    <div class="ticket {% if impresion.tamano_ticket == '58mm' %}tamano-58mm{% endif %}">
+        <div class="t-center">
+            {% if impresion.mostrar_logo and branding.logo_impresion %}
+            <img class="t-logo-img" src="{{ branding.logo_impresion.url }}" alt="Logo">
+            {% elif impresion.mostrar_logo and branding.logo_principal %}
+            <img class="t-logo-img" src="{{ branding.logo_principal.url }}" alt="Logo">
+            {% else %}
+            <div class="t-logo">{{ empresa.nombre_comercial|default:'ERP'|slice:':2'|upper }}</div>
+            {% endif %}
+            <h1>{{ empresa.nombre_comercial|default:'Mi Empresa' }}</h1>
+            {% if empresa.nit %}<p class="sub">{{ empresa.razon_social }} · NIT {{ empresa.nit }}</p>{% endif %}
+            {% if empresa.direccion %}<p class="sub">{{ empresa.direccion }}{% if empresa.telefono %} · Tel {{ empresa.telefono }}{% endif %}</p>{% endif %}
+        </div>
+        <hr>
+        <div class="doc-title t-center">
+            {{ facturacion.get_tipo_documento_display|default:'FACTURA DE VENTA' }}
+        </div>
+        <div class="doc-meta">
+            <span>No. {% if venta.numero_factura %}{{ facturacion.prefijo_facturacion }}{% if facturacion.prefijo_facturacion %}-{% endif %}{{ venta.numero_factura }}{% else %}Sin asignar{% endif %}</span>
+            <span>{{ venta.fecha|date:'d/m/Y H:i' }}</span>
+        </div>
+        <div class="doc-meta">
+            <span>Cliente: {{ venta.cliente.nombre }} {{ venta.cliente.apellido }}</span>
+        </div>
+        <div class="doc-meta">
+            <span>Doc: {{ venta.cliente.documento|default:'—' }}</span>
+            <span>Tel: {{ venta.cliente.telefono|default:'—' }}</span>
+        </div>
+        <hr>
+        <table>
+            <thead>
+                <tr><td>Producto</td><td class="r">Cant</td><td class="r">Subt.</td></tr>
+            </thead>
+            <tbody>
+                {% if agrupar_servicio_tecnico %}
+                <tr>
+                    <td colspan="3">
+                        <div class="item-name">{{ venta.orden_servicio.concepto_display }}</div>
+                        <div class="item-code">Servicio técnico · orden {{ venta.orden_servicio.numero_orden }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="r">1</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ venta.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% else %}
+                {% for item in items %}
+                <tr>
+                    <td colspan="3">
+                        <div class="item-name">{{ item.producto.nombre }}</div>
+                        <div class="item-code">
+                            {% if ventas_cfg.mostrar_codigo_barras %}{{ item.producto.codigo }} · {% endif %}
+                            {{ empresa.simbolo_moneda }}{{ item.precio_unitario|floatformat:0 }} c/u
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="r">{{ item.cantidad }}</td>
+                    <td class="r">{{ empresa.simbolo_moneda }}{{ item.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        <hr>
+        <table class="totales">
+            <tr><td class="lbl">Subtotal</td><td class="r">{{ empresa.simbolo_moneda }}{{ venta.subtotal|floatformat:0 }}</td></tr>
+            {% if ventas_cfg.mostrar_descuento %}
+            <tr><td class="lbl">Descuento ({{ venta.descuento_porcentaje|floatformat:0 }}%)</td><td class="r">-{{ empresa.simbolo_moneda }}{{ venta.descuento_valor|floatformat:0 }}</td></tr>
+            {% endif %}
+            <tr><td class="lbl">IVA ({{ venta.iva_porcentaje|floatformat:0 }}%)</td><td class="r">{{ empresa.simbolo_moneda }}{{ venta.iva_valor|floatformat:0 }}</td></tr>
+            <tr class="total-final"><td>TOTAL</td><td class="r">{{ empresa.simbolo_moneda }}{{ venta.total|floatformat:0 }}</td></tr>
+        </table>
+        {% if facturacion.mensaje_agradecimiento %}
+        <div class="footer-msg">{{ facturacion.mensaje_agradecimiento }}</div>
+        {% endif %}
+        {% if facturacion.nota_legal or facturacion.politica_devolucion %}
+        <div class="legal">
+            {% if facturacion.nota_legal %}{{ facturacion.nota_legal }}<br>{% endif %}
+            {% if facturacion.politica_devolucion %}{{ facturacion.politica_devolucion }}{% endif %}
+        </div>
+        {% endif %}
+        {% if qr_data_uri %}
+        <img class="qr-box" src="{{ qr_data_uri }}" alt="QR">
+        {% endif %}
+    </div>
+{% endif %}
+</div>
+
+</body>
+</html>

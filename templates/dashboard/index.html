@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - ERP Celulares{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="fw-bold mb-1">Bienvenido, {{ user.get_full_name|default:user.username }}</h4>
+    <p class="text-muted mb-0">Resumen general de la actividad de la empresa</p>
+</div>
+
+<div class="row g-3">
+    {% for kpi in kpis %}
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card kpi-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon" style="background-color: {{ kpi.color }};">
+                    <i class="bi {{ kpi.icono }}"></i>
+                </div>
+                <div>
+                    <p class="kpi-value">{{ kpi.valor }}</p>
+                    <p class="kpi-label">{{ kpi.label }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-bar-chart-line text-primary"></i> Ventas de los últimos 7 días
+            </div>
+            <div class="card-body">
+                <canvas id="graficoVentas" height="90"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-lightning-charge text-warning"></i> Accesos rápidos</div>
+            <div class="card-body d-flex flex-wrap gap-2">
+                {% if user.es_admin or user.role == 'vendedor' %}
+                <a href="{% url 'sales:sale_create' %}" class="btn btn-outline-success"><i class="bi bi-cart-plus"></i> Nueva venta</a>
+                {% endif %}
+                {% if user.es_admin or user.role == 'tecnico' %}
+                <a href="{% url 'repairs:order_create' %}" class="btn btn-outline-warning"><i class="bi bi-tools"></i> Nueva orden</a>
+                {% endif %}
+                {% if user.es_admin or user.role == 'vendedor' %}
+                <a href="{% url 'clients:client_create' %}" class="btn btn-outline-primary"><i class="bi bi-person-plus"></i> Nuevo cliente</a>
+                {% endif %}
+                {% if user.es_admin %}
+                <a href="{% url 'inventory:product_create' %}" class="btn btn-outline-primary"><i class="bi bi-box-seam"></i> Nuevo producto</a>
+                <a href="{% url 'inventory:category_list' %}" class="btn btn-outline-secondary"><i class="bi bi-tags"></i> Categorías</a>
+                <a href="{% url 'accounts:user_create' %}" class="btn btn-outline-secondary"><i class="bi bi-person-gear"></i> Nuevo usuario</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-clock-history text-primary"></i> Estado del sistema</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Módulo de Clientes operativo</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Módulo de Inventario operativo</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Módulo de Ventas operativo</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i> Módulo de Servicio Técnico operativo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    const ctx = document.getElementById('graficoVentas');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ grafico_labels|safe }},
+                datasets: [{
+                    label: 'Ventas ($)',
+                    data: {{ grafico_datos|safe }},
+                    backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (c) => '$ ' + c.parsed.y.toLocaleString('es-CO')
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: (v) => '$ ' + v.toLocaleString('es-CO') }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

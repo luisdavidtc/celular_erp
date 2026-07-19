@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios - ERP Celulares{% endblock %}
+{% block page_title %}Gestión de usuarios{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <form class="d-flex" method="get" style="max-width: 360px;">
+        <input type="text" name="q" value="{{ busqueda }}" class="form-control me-2"
+               placeholder="Buscar por nombre, usuario o correo...">
+        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+    </form>
+    <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Nuevo usuario
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre completo</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td class="fw-semibold">{{ u.username }}</td>
+                        <td>{{ u.get_full_name|default:"—" }}</td>
+                        <td>{{ u.email|default:"—" }}</td>
+                        <td><span class="badge bg-info text-dark">{{ u.get_role_display }}</span></td>
+                        <td>
+                            {% if u.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'accounts:user_update' u.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if u != user %}
+                            <a href="{% url 'accounts:user_delete' u.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No se encontraron usuarios.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

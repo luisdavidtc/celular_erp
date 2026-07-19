@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Anular venta - ERP Celulares{% endblock %}
+{% block page_title %}Anular venta{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                <h4 class="mt-3">¿Anular la venta {{ venta.numero }}?</h4>
+                <p class="text-muted">
+                    Esta acción marcará la venta como <strong>anulada</strong> y
+                    devolverá automáticamente el stock de todos los productos al inventario.
+                </p>
+                <form method="post" class="d-flex justify-content-center gap-2 mt-4">
+                    {% csrf_token %}
+                    <a href="{% url 'sales:sale_detail' venta.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Sí, anular venta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

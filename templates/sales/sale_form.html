@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ titulo }} - ERP Celulares{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<form method="post" id="ventaForm"
+      data-clientes-url="{% url 'sales:client_search' %}"
+      data-productos-url="{% url 'sales:product_search' %}">
+    {% csrf_token %}
+    <div class="row g-3">
+        <!-- Columna izquierda: cliente y productos -->
+        <div class="col-lg-8">
+            <!-- Cliente -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-person"></i> Cliente</div>
+                <div class="card-body">
+                    <div class="position-relative mb-2">
+                        <input type="text" id="clienteBuscar" class="form-control"
+                               placeholder="Buscar cliente por nombre, documento o teléfono...">
+                        <div id="clienteResultados" class="list-group position-absolute w-100 shadow"
+                             style="z-index: 1000; display: none; max-height: 240px; overflow-y: auto;"></div>
+                    </div>
+                    <select name="cliente" id="id_cliente" class="form-select d-none" required>
+                        <option value="">--- Selecciona un cliente ---</option>
+                        {% for c in form.cliente.field.queryset %}
+                        <option value="{{ c.id }}">{{ c.nombre_completo }} ({{ c.documento }})</option>
+                        {% endfor %}
+                    </select>
+                    <div id="clienteSeleccionado" class="alert alert-info py-2 px-3 mb-0 d-none">
+                        <i class="bi bi-check-circle"></i> <span id="clienteNombre"></span>
+                        <button type="button" class="btn-close float-end" id="clienteLimpiar" aria-label="Quitar"></button>
+                    </div>
+                    {% for error in form.cliente.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Productos -->
+            <div class="card mb-3">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-box-seam"></i> Productos</div>
+                <div class="card-body">
+                    <div class="position-relative mb-3">
+                        <input type="text" id="productoBuscar" class="form-control"
+                               placeholder="Buscar producto por nombre o código para agregar...">
+                        <div id="productoResultados" class="list-group position-absolute w-100 shadow"
+                             style="z-index: 1000; display: none; max-height: 240px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0" id="itemsTabla">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th style="width: 110px;">Cantidad</th>
+                                    <th style="width: 130px;">Precio unit.</th>
+                                    <th style="width: 120px;">Descuento</th>
+                                    <th class="text-end" style="width: 120px;">Subtotal</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                <tr id="filaVacia"><td colspan="6" class="text-center text-muted py-3">
+                                    Aún no se han agregado productos.
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-left-text"></i> Observaciones</div>
+                <div class="card-body">{{ form.observaciones }}</div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: totales -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 1rem;">
+                <div class="card-header bg-white fw-semibold"><i class="bi bi-calculator"></i> Resumen</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Descuento (%)</label>
+                        {{ form.descuento_porcentaje }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">IVA (%)</label>
+                        {{ form.iva_porcentaje }}
+                    </div>
+                    <hr>
+                    <dl class="row mb-0">
+                        <dt class="col-7 fw-normal text-muted">Subtotal</dt>
+                        <dd class="col-5 text-end" id="resumenSubtotal">$ 0</dd>
+                        <dt class="col-7 fw-normal text-muted">Descuento</dt>
+                        <dd class="col-5 text-end" id="resumenDescuento">- $ 0</dd>
+                        <dt class="col-7 fw-normal text-muted">IVA</dt>
+                        <dd class="col-5 text-end" id="resumenIva">$ 0</dd>
+                        <dt class="col-7 fw-bold border-top pt-2">Total</dt>
+                        <dd class="col-5 text-end fw-bold fs-5 border-top pt-2" id="resumenTotal">$ 0</dd>
+                        <dt class="col-7 fw-normal text-success">Ganancia</dt>
+                        <dd class="col-5 text-end text-success" id="resumenGanancia">$ 0</dd>
+                    </dl>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary" id="btnGuardar">
+                            <i class="bi bi-check-lg"></i> Confirmar venta
+                        </button>
+                        <a href="{% url 'sales:sale_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Plantilla de fila de ítem -->
+<template id="filaItemTemplate">
+    <tr class="item-fila">
+        <td>
+            <div class="fw-semibold nombre-prod"></div>
+            <small class="text-muted codigo-prod"></small>
+            <input type="hidden" name="producto_id" class="prod-id">
+            <input type="hidden" name="precio_compra_item" class="precio-compra">
+        </td>
+        <td><input type="number" name="cantidad" class="form-control form-control-sm cantidad" value="1" min="1"></td>
+        <td><input type="number" name="precio_unitario" class="form-control form-control-sm precio" step="0.01" min="0"></td>
+        <td><input type="number" name="descuento_item" class="form-control form-control-sm descuento" value="0" step="0.01" min="0"></td>
+        <td class="text-end subtotal-celda">$ 0</td>
+        <td><button type="button" class="btn btn-sm btn-outline-danger quitar"><i class="bi bi-trash"></i></button></td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sale_form.js' %}"></script>
+{% endblock %}

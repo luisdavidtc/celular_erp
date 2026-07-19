@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Inventario - ERP Celulares{% endblock %}
+{% block page_title %}Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam text-primary"></i> Productos</h5>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:category_list' %}" class="btn btn-outline-secondary"><i class="bi bi-tags"></i> Categorías</a>
+        <a href="{% url 'inventory:product_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo producto</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form class="row g-2 align-items-end" method="get">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Buscar</label>
+                <input type="text" name="q" value="{{ busqueda }}" class="form-control"
+                       placeholder="Nombre, código, marca, modelo...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Categoría</label>
+                <select name="categoria" class="form-select">
+                    <option value="">Todas</option>
+                    {% for cat in categorias %}
+                    <option value="{{ cat.id }}" {% if categoria_id == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="stock_bajo" value="1"
+                           id="stockBajo" {% if solo_stock_bajo %}checked{% endif %}>
+                    <label class="form-check-label" for="stockBajo">Solo stock bajo</label>
+                </div>
+                <button type="submit" class="btn btn-outline-secondary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Código</th>
+                        <th>Categoría</th>
+                        <th>Marca / Modelo</th>
+                        <th class="text-end">P. Venta</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in productos %}
+                    <tr>
+                        <td class="fw-semibold">
+                            {% if p.imagen %}
+                            <img src="{{ p.imagen.url }}" alt="" width="32" height="32" class="rounded me-2 object-fit-cover">
+                            {% endif %}
+                            {{ p.nombre }}
+                        </td>
+                        <td>{{ p.codigo }}</td>
+                        <td><span class="badge bg-info text-dark">{{ p.categoria.nombre }}</span></td>
+                        <td>{{ p.marca|default:"—" }} {{ p.modelo }}</td>
+                        <td class="text-end">$ {{ p.precio_venta|floatformat:0 }}</td>
+                        <td class="text-center">
+                            {% if p.stock_bajo %}
+                                <span class="badge bg-danger" title="Stock por debajo del mínimo">
+                                    <i class="bi bi-exclamation-triangle"></i> {{ p.stock }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success">{{ p.stock }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a href="{% url 'inventory:product_update' p.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'inventory:product_delete' p.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No se encontraron productos.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
