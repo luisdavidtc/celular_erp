@@ -327,3 +327,63 @@ class RepairPart(models.Model):
     def save(self, *args, **kwargs):
         self.calcular_subtotal()
         super().save(*args, **kwargs)
+
+
+class RepairOrderStatusLog(models.Model):
+    """Registro de auditoría de cambios de estado en órdenes de reparación.
+    
+    Cada cambio de estado genera automáticamente un log con:
+    - Estado anterior
+    - Estado nuevo
+    - Usuario que realizó el cambio
+    - Fecha y hora exacta
+    - Notas adicionales (opcional)
+    """
+
+    orden = models.ForeignKey(
+        RepairOrder,
+        on_delete=models.CASCADE,
+        related_name='logs_estado',
+        verbose_name='Orden de servicio',
+    )
+    estado_anterior = models.CharField(
+        'Estado anterior',
+        max_length=25,
+        choices=RepairOrder.Estado.choices,
+    )
+    estado_nuevo = models.CharField(
+        'Estado nuevo',
+        max_length=25,
+        choices=RepairOrder.Estado.choices,
+    )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Usuario',
+        related_name='cambios_estado_reparacion',
+    )
+    timestamp = models.DateTimeField(
+        'Fecha y hora',
+        auto_now_add=True,
+    )
+    notas = models.TextField(
+        'Notas',
+        blank=True,
+        help_text='Observaciones adicionales sobre el cambio de estado',
+    )
+
+    class Meta:
+        verbose_name = 'Log de cambio de estado'
+        verbose_name_plural = 'Logs de cambios de estado'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['orden', '-timestamp']),
+        ]
+
+    def __str__(self):
+        return (
+            f'{self.orden.numero_orden}: {self.get_estado_anterior_display()} '
+            f'→ {self.get_estado_nuevo_display()} '
+            f'({self.timestamp.strftime("%d/%m/%Y %H:%M")})'
+        )
