@@ -7,6 +7,7 @@ Incluye:
 - Detalle de orden.
 - Actualización de estado con validación de transiciones (workflow).
 - Al agregar repuestos del inventario se descuenta stock.
+- Registro automático de cambios de estado en RepairOrderStatusLog.
 """
 
 from decimal import Decimal, InvalidOperation
@@ -23,7 +24,7 @@ from company.utils import generar_qr_data_uri, obtener_configuracion_empresa
 from inventory.models import Product
 
 from .forms import RepairOrderForm, RepairStatusForm
-from .models import RepairOrder, RepairPart
+from .models import RepairOrder, RepairPart, RepairOrderStatusLog
 
 # Roles que pueden gestionar servicio técnico
 ROLES_SERVICIO = ('admin', 'tecnico')
@@ -148,10 +149,15 @@ def order_detail(request, pk):
         RepairOrder.objects.select_related('cliente', 'tecnico'), pk=pk
     )
     status_form = RepairStatusForm(orden=orden)
+    
+    # Obtener historial de cambios de estado (logs)
+    logs_estado = orden.logs_estado.select_related('usuario').all()
+    
     contexto = {
         'orden': orden,
         'repuestos': orden.repuestos.select_related('producto').all(),
         'status_form': status_form,
+        'logs_estado': logs_estado,
         'seccion_activa': 'servicio',
     }
     return render(request, 'repairs/order_detail.html', contexto)
@@ -196,7 +202,11 @@ def order_print(request, pk):
 @login_required
 @role_required(*ROLES_SERVICIO)
 def order_update_status(request, pk):
-    """Actualizar el estado de una orden validando transiciones lógicas."""
+    """Actualizar el estado de una orden validando transiciones lógicas.
+    
+    Registra automáticamente cada cambio de estado en RepairOrderStatusLog
+    con usuario, fecha/hora y notas opcionales.
+    """
     orden = get_object_or_404(RepairOrder, pk=pk)
     if request.method == 'POST':
         form = RepairStatusForm(request.POST, orden=orden)
@@ -216,15 +226,25 @@ def order_update_status(request, pk):
                 )
                 return redirect('repairs:order_detail', pk=orden.pk)
 
+            # Guardar estado anterior para el log
+            estado_anterior = orden.estado
+            
+            # Actualizar estado
             orden.estado = nuevo_estado
             if nuevo_estado == RepairOrder.Estado.ENTREGADO:
                 orden.fecha_entrega = timezone.now()
-            if nota:
-                marca_tiempo = timezone.now().strftime('%d/%m/%Y %H:%M')
-                linea = f'[{marca_tiempo}] {orden.get_estado_display()}: {nota}'
-                orden.observaciones = (orden.observaciones + '\n' + linea).strip() if orden.observaciones else linea
-
-            orden.save(update_fields=['estado', 'fecha_entrega', 'observaciones'])
+            
+            orden.save(update_fields=['estado', 'fecha_entrega'])
+            
+            # Registrar cambio en log de auditoría
+            RepairOrderStatusLog.objects.create(
+                orden=orden,
+                estado_anterior=estado_anterior,
+                estado_nuevo=nuevo_estado,
+                usuario=request.user,
+                notas=nota,
+            )
+            
             messages.success(request, f'Estado actualizado a "{orden.get_estado_display()}".')
         else:
             messages.error(request, 'No se pudo actualizar el estado.')
@@ -242,13 +262,39 @@ def order_invoice(request, pk):
     nueva (RepairOrder.venta es OneToOne y RepairOrder.facturar valida
     explícitamente esta condición dentro de una transacción con bloqueo
     de fila).
+    
+    Después de facturar exitosamente, cambia el estado a FACTURADO.
     """
     orden = get_object_or_404(RepairOrder, pk=pk)
     if request.method != 'POST':
         return redirect('repairs:order_detail', pk=orden.pk)
 
+    # Validar que la orden está en estado LISTO_PARA_ENTREGAR
+    if orden.estado != RepairOrder.Estado.LISTO_PARA_ENTREGAR:
+        messages.error(
+            request,
+            f'La orden debe estar en estado "Listo para entregar" para facturar. '
+            f'Estado actual: "{orden.get_estado_display()}".'
+        )
+        return redirect('repairs:order_detail', pk=orden.pk)
+
     try:
-        venta = orden.facturar(request.user)
+        with transaction.atomic():
+            venta = orden.facturar(request.user)
+            
+            # Cambiar estado a FACTURADO
+            estado_anterior = orden.estado
+            orden.estado = RepairOrder.Estado.FACTURADO
+            orden.save(update_fields=['estado'])
+            
+            # Registrar cambio en log de auditoría
+            RepairOrderStatusLog.objects.create(
+                orden=orden,
+                estado_anterior=estado_anterior,
+                estado_nuevo=RepairOrder.Estado.FACTURADO,
+                usuario=request.user,
+                notas='Facturación automática al crear venta',
+            )
     except ValueError as e:
         messages.error(request, str(e))
         return redirect('repairs:order_detail', pk=orden.pk)
